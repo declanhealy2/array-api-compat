@@ -7,6 +7,8 @@ mx = pytest.importorskip("mlx.core")
 import array_api_compat
 import array_api_compat.mlx as xp
 
+mx.set_default_device(mx.cpu)
+
 
 def test_namespace_dispatch():
     x = mx.arange(3)
