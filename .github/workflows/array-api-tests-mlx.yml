@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/mlx-compat-complete
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
