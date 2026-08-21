@@ -9,6 +9,7 @@ py.install_sources([
     'test_dask.py',
     'test_isdtype.py',
     'test_jax.py',
+    'test_mlx.py',
     'test_no_dependencies.py',
     'test_torch.py',
   ],
