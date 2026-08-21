@@ -27,7 +27,7 @@ def is_mlx_array(x: object) -> bool:
 
 def is_mlx_namespace(xp: ModuleType) -> bool:
     """Return whether *xp* is MLX or the array-api-compat MLX wrapper."""
-    return xp.__name__ in {"mlx.core", "array_api_compat.mlx"}
+    return xp.__name__ in {"mlx.core", _base._compat_module_name() + ".mlx"}
 
 
 def array_namespace(
@@ -95,7 +95,7 @@ def to_device(
 
     if not isinstance(device, mx.Device):
         raise TypeError(f"expected an mlx.core.Device, got {type(device).__name__}")
-    return mx.copy(x, stream=device)
+    return mx.full_like(x, x, dtype=x.dtype, stream=device)
 
 
 def is_lazy_array(x: object) -> bool:
