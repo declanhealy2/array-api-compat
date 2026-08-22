@@ -1,0 +1,18 @@
+# MLX arrays intentionally do not implement data-dependent output shapes.
+array_api_tests/test_array_object.py::test_getitem
+array_api_tests/test_searching_functions.py::test_nonzero
+array_api_tests/test_set_functions.py::test_unique_all
+array_api_tests/test_set_functions.py::test_unique_counts
+array_api_tests/test_set_functions.py::test_unique_inverse
+array_api_tests/test_set_functions.py::test_unique_values
+
+# array-api-compat does not wrap or monkeypatch mlx.core.array.
+array_api_tests/test_has_names.py::test_has_names[array_method-__index__]
+array_api_tests/test_has_names.py::test_has_names[array_method-to_device]
+array_api_tests/test_has_names.py::test_has_names[array_attribute-device]
+array_api_tests/test_has_names.py::test_has_names[array_attribute-mT]
+array_api_tests/test_signatures.py::test_array_method_signature[__index__]
+array_api_tests/test_signatures.py::test_array_method_signature[to_device]
+
+# MLX does not expose non-scalar, data-dependent repeat shapes.
+array_api_tests/test_manipulation_functions.py::test_repeat

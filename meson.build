@@ -20,6 +20,7 @@ sources_raw = {
     'src/array_api_compat/common/_fft.py',
     'src/array_api_compat/common/_helpers.py',
     'src/array_api_compat/common/_linalg.py',
+    'src/array_api_compat/common/_mlx_helpers.py',
     'src/array_api_compat/common/_typing.py',
   ],
 
@@ -42,6 +43,16 @@ sources_raw = {
     'src/array_api_compat/dask/array/_info.py',
     'src/array_api_compat/dask/array/fft.py',
     'src/array_api_compat/dask/array/linalg.py',
+  ],
+
+  'array_api_compat/mlx': [
+    'src/array_api_compat/mlx/__init__.py',
+    'src/array_api_compat/mlx/_aliases.py',
+    'src/array_api_compat/mlx/_info.py',
+    'src/array_api_compat/mlx/_overrides.py',
+    'src/array_api_compat/mlx/_typing.py',
+    'src/array_api_compat/mlx/fft.py',
+    'src/array_api_compat/mlx/linalg.py',
   ],
 
   'array_api_compat/numpy': [

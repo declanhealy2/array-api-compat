@@ -1,0 +1,1 @@
+# MLX tests are xfailed rather than skipped so unexpected passes remain visible.
