@@ -301,7 +301,7 @@ def cumulative_sum(
         normalized_axis = 0
     else:
         normalized_axis = _normalize_axis(axis, x.ndim)
-        result = mx.cumsum(x, axis=normalized_axis, dtype)
+        result = mx.cumsum(x, axis=normalized_axis, dtype=dtype)
     if include_initial:
         result = _prepend_identity(result, axis=normalized_axis, identity=0)
     return result
@@ -334,3 +334,5 @@ def moveaxis(
     source: int | tuple[int, ...],
     destination: int | tuple[int, ...],
     /,
+) -> Array:
+    return mx.moveaxis(x, source, destination)
