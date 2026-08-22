@@ -4,8 +4,9 @@ from .._internal import clone_module
 
 __all__ = clone_module("mlx.core", globals())
 
-from . import _aliases
+from . import _aliases, _overrides
 from ._aliases import *  # type: ignore[assignment,no-redef] # noqa: F403
+from ._overrides import *  # type: ignore[assignment,no-redef] # noqa: F403
 from ._info import __array_namespace_info__
 
 # Import the compatibility submodules explicitly so they replace the native
@@ -18,6 +19,7 @@ __array_api_version__: Final = "2025.12"
 __all__ = sorted(
     set(__all__)
     | set(_aliases.__all__)
+    | set(_overrides.__all__)
     | {
         "__array_api_version__",
         "__array_namespace_info__",
