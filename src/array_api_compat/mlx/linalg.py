@@ -37,7 +37,7 @@ class SVDResult(NamedTuple):
 
 
 def cholesky(x: Array, /, *, upper: bool = False) -> Array:
-    return mx.linalg.cholesky(x, upper=upper)
+    return mx.linalg.cholesky(x, upper=upper, stream=mx.cpu)
 
 
 def cross(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
@@ -49,7 +49,7 @@ def diagonal(x: Array, /, *, offset: int = 0) -> Array:
 
 
 def eigh(x: Array, /) -> EighResult:
-    return EighResult(*mx.linalg.eigh(x))
+    return EighResult(*mx.linalg.eigh(x, stream=mx.cpu))
 
 
 def matrix_norm(
@@ -78,7 +78,9 @@ def matrix_rank(
     singular_values = svdvals(x)
     largest = mx.max(singular_values, axis=-1, keepdims=True)
     if rtol is None:
-        threshold = largest * max(x.shape[-2:]) * mx.finfo(singular_values.dtype).eps
+        threshold = largest * max(x.shape[-2:]) * mx.finfo(
+            singular_values.dtype
+        ).eps
     else:
         threshold = largest * mx.asarray(rtol)[..., None]
     return mx.count_nonzero(
@@ -98,9 +100,9 @@ def pinv(
     rtol: float | Array | None = None,
 ) -> Array:
     if rtol is None:
-        return mx.linalg.pinv(x)
+        return mx.linalg.pinv(x, stream=mx.cpu)
 
-    u, singular_values, vh = mx.linalg.svd(x)
+    u, singular_values, vh = mx.linalg.svd(x, stream=mx.cpu)
     largest = mx.max(singular_values, axis=-1, keepdims=True)
     cutoff = largest * mx.asarray(rtol)[..., None]
     reciprocal = mx.where(
@@ -125,11 +127,11 @@ def qr(
         raise NotImplementedError(
             "MLX currently provides reduced QR for tall matrices only"
         )
-    return QRResult(*mx.linalg.qr(x))
+    return QRResult(*mx.linalg.qr(x, stream=mx.cpu))
 
 
 def slogdet(x: Array, /) -> SlogdetResult:
-    return SlogdetResult(*mx.linalg.slogdet(x))
+    return SlogdetResult(*mx.linalg.slogdet(x, stream=mx.cpu))
 
 
 def svd(
@@ -142,11 +144,11 @@ def svd(
         raise NotImplementedError(
             "MLX currently provides reduced SVD for rectangular matrices"
         )
-    return SVDResult(*mx.linalg.svd(x))
+    return SVDResult(*mx.linalg.svd(x, stream=mx.cpu))
 
 
 def svdvals(x: Array, /) -> Array:
-    return mx.linalg.svd(x, compute_uv=False)
+    return mx.linalg.svd(x, compute_uv=False, stream=mx.cpu)
 
 
 def tensordot(
@@ -220,14 +222,18 @@ def vector_norm(
         order = remaining + axes
         permuted = mx.transpose(x, order) if order != tuple(range(x.ndim)) else x
         reduced_size = math.prod(x.shape[index] for index in axes)
-        reduced_shape = tuple(x.shape[index] for index in remaining) + (reduced_size,)
+        reduced_shape = tuple(x.shape[index] for index in remaining) + (
+            reduced_size,
+        )
         flattened = mx.reshape(permuted, reduced_shape)
         result = mx.linalg.norm(flattened, ord=ord, axis=-1)
 
     if not keepdims:
         return result
 
-    target_shape = [1 if index in axes else x.shape[index] for index in range(x.ndim)]
+    target_shape = [
+        1 if index in axes else x.shape[index] for index in range(x.ndim)
+    ]
     return mx.reshape(result, tuple(target_shape))
 
 
