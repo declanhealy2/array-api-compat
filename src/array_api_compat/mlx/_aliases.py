@@ -25,10 +25,7 @@ def _stream(device: Device | None) -> Device | None:
 
 
 def _copy_array(x: Array, *, device: Device | None = None) -> Array:
-    # ``mlx.core.copy`` is a C++ API but is not currently public in Python.
-    # ``full_like`` with the input itself as the fill array creates a native
-    # MLX copy and lets us select the execution device without any host
-    # conversion.
+    """Return a native MLX copy, optionally evaluated on *device*."""
     return mx.full_like(
         x,
         x,
@@ -40,7 +37,9 @@ def _copy_array(x: Array, *, device: Device | None = None) -> Array:
 def _normalize_axis(axis: int, ndim: int) -> int:
     normalized = axis + ndim if axis < 0 else axis
     if normalized < 0 or normalized >= ndim:
-        raise IndexError(f"axis {axis} is out of bounds for an array of dimension {ndim}")
+        raise IndexError(
+            f"axis {axis} is out of bounds for an array of dimension {ndim}"
+        )
     return normalized
 
 
@@ -325,7 +324,9 @@ def flip(x: Array, /, *, axis: int | tuple[int, ...] | None = None) -> Array:
 
 def matrix_transpose(x: Array, /) -> Array:
     if x.ndim < 2:
-        raise ValueError("matrix_transpose requires an array with at least two dimensions")
+        raise ValueError(
+            "matrix_transpose requires an array with at least two dimensions"
+        )
     return mx.swapaxes(x, -1, -2)
 
 
@@ -335,4 +336,346 @@ def moveaxis(
     destination: int | tuple[int, ...],
     /,
 ) -> Array:
-    return mx.moveaxis(x, source, destination)
+    if isinstance(source, int):
+        if not isinstance(destination, int):
+            raise ValueError(
+                "source and destination must have the same number of axes"
+            )
+        return mx.moveaxis(x, source, destination)
+
+    if isinstance(destination, int):
+        raise ValueError("source and destination must have the same number of axes")
+    if len(source) != len(destination):
+        raise ValueError("source and destination must have the same number of axes")
+
+    normalized_source = tuple(_normalize_axis(axis, x.ndim) for axis in source)
+    normalized_destination = tuple(
+        _normalize_axis(axis, x.ndim) for axis in destination
+    )
+    if len(set(normalized_source)) != len(normalized_source):
+        raise ValueError("repeated axis in source")
+    if len(set(normalized_destination)) != len(normalized_destination):
+        raise ValueError("repeated axis in destination")
+
+    order = [axis for axis in range(x.ndim) if axis not in normalized_source]
+    for destination_axis, source_axis in sorted(
+        zip(normalized_destination, normalized_source),
+    ):
+        order.insert(destination_axis, source_axis)
+    return mx.transpose(x, order)
+
+
+def permute_dims(x: Array, axes: tuple[int, ...], /) -> Array:
+    return mx.transpose(x, axes)
+
+
+def repeat(
+    x: Array,
+    repeats: int | Array,
+    /,
+    *,
+    axis: int | None = None,
+) -> Array:
+    if isinstance(repeats, int):
+        return mx.repeat(x, repeats, axis=axis)
+    if isinstance(repeats, mx.array) and repeats.ndim == 0:
+        return mx.repeat(x, int(repeats.item()), axis=axis)
+    raise NotImplementedError(
+        "MLX cannot represent the data-dependent output shape produced by "
+        "a non-scalar repeats array"
+    )
+
+
+def reshape(
+    x: Array,
+    shape: tuple[int, ...],
+    /,
+    *,
+    copy: bool | None = None,
+) -> Array:
+    result = mx.reshape(x, shape)
+    return _copy_array(result) if copy is True else result
+
+
+def roll(
+    x: Array,
+    shift: int | tuple[int, ...],
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+) -> Array:
+    return mx.roll(x, shift, axis=axis)
+
+
+def squeeze(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+) -> Array:
+    return mx.squeeze(x, axis=axis)
+
+
+def stack(arrays: Sequence[Array], /, *, axis: int = 0) -> Array:
+    return mx.stack(arrays, axis=axis)
+
+
+def unstack(x: Array, /, *, axis: int = 0) -> tuple[Array, ...]:
+    return tuple(mx.unstack(x, axis=axis))
+
+
+def all(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    keepdims: bool = False,
+) -> Array:
+    return mx.all(x, axis=axis, keepdims=keepdims)
+
+
+def any(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    keepdims: bool = False,
+) -> Array:
+    return mx.any(x, axis=axis, keepdims=keepdims)
+
+
+def max(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    keepdims: bool = False,
+) -> Array:
+    return mx.max(x, axis=axis, keepdims=keepdims)
+
+
+def mean(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    keepdims: bool = False,
+) -> Array:
+    return mx.mean(x, axis=axis, keepdims=keepdims)
+
+
+def min(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    keepdims: bool = False,
+) -> Array:
+    return mx.min(x, axis=axis, keepdims=keepdims)
+
+
+def prod(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: DType | None = None,
+    keepdims: bool = False,
+) -> Array:
+    if dtype is not None and x.dtype != dtype:
+        x = mx.astype(x, dtype)
+    return mx.prod(x, axis=axis, keepdims=keepdims)
+
+
+def std(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    correction: int | float = 0.0,
+    keepdims: bool = False,
+) -> Array:
+    if not float(correction).is_integer():
+        raise ValueError("MLX supports only integral correction values")
+    return mx.std(x, axis=axis, keepdims=keepdims, ddof=int(correction))
+
+
+def sum(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: DType | None = None,
+    keepdims: bool = False,
+) -> Array:
+    if dtype is not None and x.dtype != dtype:
+        x = mx.astype(x, dtype)
+    return mx.sum(x, axis=axis, keepdims=keepdims)
+
+
+def var(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    correction: int | float = 0.0,
+    keepdims: bool = False,
+) -> Array:
+    if not float(correction).is_integer():
+        raise ValueError("MLX supports only integral correction values")
+    return mx.var(x, axis=axis, keepdims=keepdims, ddof=int(correction))
+
+
+def argmax(
+    x: Array,
+    /,
+    *,
+    axis: int | None = None,
+    keepdims: bool = False,
+) -> Array:
+    return mx.argmax(x, axis=axis, keepdims=keepdims).astype(mx.int32)
+
+
+def argmin(
+    x: Array,
+    /,
+    *,
+    axis: int | None = None,
+    keepdims: bool = False,
+) -> Array:
+    return mx.argmin(x, axis=axis, keepdims=keepdims).astype(mx.int32)
+
+
+def count_nonzero(
+    x: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    keepdims: bool = False,
+) -> Array:
+    return mx.count_nonzero(x, axis=axis, keepdims=keepdims).astype(mx.int32)
+
+
+def _descending_key(x: Array) -> Array:
+    if x.dtype == mx.bool_:
+        return mx.logical_not(x)
+    if mx.issubdtype(x.dtype, mx.unsignedinteger):
+        return mx.subtract(mx.array(mx.iinfo(x.dtype).max, dtype=x.dtype), x)
+    return mx.negative(x)
+
+
+def argsort(
+    x: Array,
+    /,
+    *,
+    axis: int = -1,
+    descending: bool = False,
+    stable: bool = True,
+) -> Array:
+    # MLX sorting is stable; a stable sort also satisfies stable=False.
+    key = _descending_key(x) if descending else x
+    return mx.argsort(key, axis=axis).astype(mx.int32)
+
+
+def sort(
+    x: Array,
+    /,
+    *,
+    axis: int = -1,
+    descending: bool = False,
+    stable: bool = True,
+) -> Array:
+    result = mx.sort(x, axis=axis)
+    return mx.flip(result, axis=axis) if descending else result
+
+
+def take(x: Array, indices: Array, /, *, axis: int | None = None) -> Array:
+    return mx.take(x, indices, axis=axis)
+
+
+def take_along_axis(
+    x: Array,
+    indices: Array,
+    /,
+    *,
+    axis: int,
+) -> Array:
+    return mx.take_along_axis(x, indices, axis=axis)
+
+
+def clip(
+    x: Array,
+    /,
+    min: int | float | Array | None = None,
+    max: int | float | Array | None = None,
+) -> Array:
+    if min is None and max is None:
+        raise ValueError("at least one of min or max must be specified")
+    return mx.clip(x, min, max)
+
+
+def tril(x: Array, /, *, k: int = 0) -> Array:
+    return mx.tril(x, k=k)
+
+
+def triu(x: Array, /, *, k: int = 0) -> Array:
+    return mx.triu(x, k=k)
+
+
+__all__ = [
+    "all",
+    "any",
+    "arange",
+    "argmax",
+    "argmin",
+    "argsort",
+    "asarray",
+    "astype",
+    "broadcast_arrays",
+    "broadcast_to",
+    "clip",
+    "concat",
+    "count_nonzero",
+    "cumulative_prod",
+    "cumulative_sum",
+    "diff",
+    "empty",
+    "empty_like",
+    "expand_dims",
+    "eye",
+    "flip",
+    "from_dlpack",
+    "full",
+    "full_like",
+    "linspace",
+    "matrix_transpose",
+    "max",
+    "mean",
+    "meshgrid",
+    "min",
+    "moveaxis",
+    "ones",
+    "ones_like",
+    "permute_dims",
+    "prod",
+    "repeat",
+    "reshape",
+    "roll",
+    "sort",
+    "squeeze",
+    "stack",
+    "std",
+    "sum",
+    "take",
+    "take_along_axis",
+    "tril",
+    "triu",
+    "unstack",
+    "var",
+    "zeros",
+    "zeros_like",
+]
+
+
+def __dir__() -> list[str]:
+    return __all__
