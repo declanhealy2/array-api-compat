@@ -8,7 +8,7 @@ from typing import Literal, TypeAlias
 import mlx.core as mx
 
 from .._internal import clone_module
-from ._info import _validate_device
+from ._aliases import _copy_array
 from ._typing import Array, Device, DType
 
 __all__ = clone_module("mlx.core.fft", globals())
@@ -160,7 +160,7 @@ def fftfreq(
     if dtype is not None:
         result = result.astype(dtype)
     if device is not None:
-        result = mx.copy(result, stream=_validate_device(device))
+        result = _copy_array(result, device=device)
     return result
 
 
@@ -176,7 +176,7 @@ def rfftfreq(
     if dtype is not None:
         result = result.astype(dtype)
     if device is not None:
-        result = mx.copy(result, stream=_validate_device(device))
+        result = _copy_array(result, device=device)
     return result
 
 
