@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import mlx.core as mx
 
@@ -16,6 +16,9 @@ from ._typing import Device
 
 if TYPE_CHECKING:
     from ._typing import DType
+
+_CPU_DEVICE = mx.Device(mx.cpu)
+_GPU_DEVICE = mx.Device(mx.gpu)
 
 
 def _gpu_available() -> bool:
@@ -31,14 +34,22 @@ def _gpu_available() -> bool:
         return False
 
 
-def _validate_device(device: Device | None) -> Device:
+def _validate_device(device: Any | None) -> Device:
+    """Normalize MLX device constants to concrete ``mlx.core.Device`` values."""
     if device is None:
-        return mx.default_device()
-    if not isinstance(device, mx.Device):
+        selected = mx.default_device()
+    elif isinstance(device, mx.Device):
+        selected = device
+    elif device == mx.cpu:
+        selected = _CPU_DEVICE
+    elif device == mx.gpu:
+        selected = _GPU_DEVICE
+    else:
         raise TypeError(f"expected an mlx.core.Device, got {type(device).__name__}")
-    if device == mx.gpu and not _gpu_available():
+
+    if selected == _GPU_DEVICE and not _gpu_available():
         raise ValueError("the MLX GPU device is not available")
-    return device
+    return selected
 
 
 _ALL_DTYPES: dict[str, DType] = {
@@ -143,14 +154,14 @@ class __array_namespace_info__:
                 raise ValueError(f"unsupported kind: {kind!r}") from None
 
         # MLX exposes float64 for CPU execution only.
-        if selected_device == mx.gpu:
+        if selected_device == _GPU_DEVICE:
             names = tuple(name for name in names if name != "float64")
         return {name: _ALL_DTYPES[name] for name in names}
 
     def devices(self) -> tuple[Device, ...]:
-        devices: list[Device] = [mx.cpu]
+        devices = [_CPU_DEVICE]
         if _gpu_available():
-            devices.append(mx.gpu)
+            devices.append(_GPU_DEVICE)
         return tuple(devices)
 
 
