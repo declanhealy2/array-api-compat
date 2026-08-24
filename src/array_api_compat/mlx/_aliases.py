@@ -13,9 +13,14 @@ from typing import Any
 
 import mlx.core as mx
 
+from .._internal import get_xp
+from ..common import _aliases as _common_aliases
 from ..common._typing import NestedSequence, SupportsBufferProtocol
 from ._info import _validate_device
 from ._typing import Array, Device, DType
+
+bool = mx.bool_
+isdtype = get_xp(mx)(_common_aliases.isdtype)
 
 
 def _stream(device: Device | None) -> Device | None:
@@ -359,7 +364,7 @@ def moveaxis(
 
     order = [axis for axis in range(x.ndim) if axis not in normalized_source]
     for destination_axis, source_axis in sorted(
-        zip(normalized_destination, normalized_source),
+        zip(normalized_destination, normalized_source, strict=True),
     ):
         order.insert(destination_axis, source_axis)
     return mx.transpose(x, order)
@@ -631,6 +636,7 @@ __all__ = [
     "argsort",
     "asarray",
     "astype",
+    "bool",
     "broadcast_arrays",
     "broadcast_to",
     "clip",
@@ -647,6 +653,7 @@ __all__ = [
     "from_dlpack",
     "full",
     "full_like",
+    "isdtype",
     "linspace",
     "matrix_transpose",
     "max",

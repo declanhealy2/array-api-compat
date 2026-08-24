@@ -16,7 +16,7 @@ def import_(library, wrapper=False):
             jax_numpy = import_module("jax.numpy")
             if not hasattr(jax_numpy, "__array_api_version__"):
                 library = 'jax.experimental.array_api'
-        elif library in wrapped_libraries:
+        elif library in wrapped_libraries or library == "mlx":
             library = 'array_api_compat.' + library
 
     return import_module(library)

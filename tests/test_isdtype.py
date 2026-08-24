@@ -24,6 +24,21 @@ def _spec_dtypes(library):
             'float32',
             'float64',
         }
+    elif library == 'mlx':
+        return {
+            'bool',
+            'complex64',
+            'float32',
+            'float64',
+            'int16',
+            'int32',
+            'int64',
+            'int8',
+            'uint16',
+            'uint32',
+            'uint64',
+            'uint8',
+        }
     else:
         return {
             'bool',
@@ -64,7 +79,7 @@ def isdtype_(dtype_, kind):
     assert type(res) is bool
     return res
 
-@pytest.mark.parametrize("library", wrapped_libraries)
+@pytest.mark.parametrize("library", [*wrapped_libraries, "mlx"])
 def test_isdtype_spec_dtypes(library):
     xp = import_(library, wrapper=True)
 
@@ -98,7 +113,7 @@ additional_dtypes = [
     'bfloat16',
 ]
 
-@pytest.mark.parametrize("library", wrapped_libraries)
+@pytest.mark.parametrize("library", [*wrapped_libraries, "mlx"])
 @pytest.mark.parametrize("dtype_", additional_dtypes)
 def test_isdtype_additional_dtypes(library, dtype_):
     xp = import_(library, wrapper=True)
