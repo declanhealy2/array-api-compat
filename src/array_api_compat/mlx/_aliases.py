@@ -62,13 +62,22 @@ def asarray(
 
     if isinstance(obj, mx.array):
         target_device = _stream(device)
-        conversion_device = mx.cpu if obj.dtype == mx.float64 else target_device
+        cpu_device = _stream(mx.cpu)
+        conversion_device = cpu_device if obj.dtype == mx.float64 else target_device
         result = (
             obj
             if dtype is None or dtype == obj.dtype
             else mx.astype(obj, dtype, stream=conversion_device)
         )
         if device is not None:
+            if conversion_device == target_device and result is not obj:
+                return result
+            if (
+                result is obj
+                and obj.dtype == mx.float64
+                and target_device == cpu_device
+            ):
+                return result
             return _copy_array(result, device=target_device)
         if copy is True and result is obj:
             return _copy_array(result, device=conversion_device)

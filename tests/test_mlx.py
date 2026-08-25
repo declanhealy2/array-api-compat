@@ -88,21 +88,27 @@ def test_asarray_converts_dtype_on_the_requested_device():
     try:
         with mx.stream(mx.cpu):
             source = mx.asarray([1.25, 2.5], dtype=mx.float64)
+        same_cpu_array = xp.asarray(source, dtype=mx.float64, device=mx.cpu)
         inferred = xp.asarray(source, dtype=mx.float32)
         converted = xp.asarray(source, dtype=mx.float32, device=mx.gpu)
         created = xp.asarray([1.25, 2.5], dtype=mx.float64, device=mx.cpu)
+        promoted = xp.asarray(mx.asarray([1.25, 2.5]), dtype=mx.float64, device=mx.cpu)
         mx.eval(inferred)
         mx.eval(converted)
         mx.eval(created)
+        mx.eval(promoted)
     finally:
         mx.set_default_device(previous_device)
 
+    assert same_cpu_array is source
     assert inferred.dtype == mx.float32
     assert inferred.tolist() == [1.25, 2.5]
     assert converted.dtype == mx.float32
     assert converted.tolist() == [1.25, 2.5]
     assert created.dtype == mx.float64
     assert created.tolist() == [1.25, 2.5]
+    assert promoted.dtype == mx.float64
+    assert promoted.tolist() == [1.25, 2.5]
 
 
 def test_dtype_helpers():
