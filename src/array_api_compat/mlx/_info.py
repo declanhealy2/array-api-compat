@@ -109,7 +109,7 @@ class __array_namespace_info__:
         return {
             "boolean indexing": False,
             "data-dependent shapes": False,
-            "max dimensions": None,  # type: ignore[typeddict-item]
+            "max dimensions": 10,
         }
 
     def default_device(self) -> Device:
@@ -139,11 +139,7 @@ class __array_namespace_info__:
             if unknown:
                 raise ValueError(f"unsupported kind: {unknown[0]!r}")
             names = tuple(
-                dict.fromkeys(
-                    name
-                    for item in kind
-                    for name in _KIND_NAMES[item]
-                )
+                dict.fromkeys(name for item in kind for name in _KIND_NAMES[item])
             )
         else:
             try:

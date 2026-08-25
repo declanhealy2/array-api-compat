@@ -53,7 +53,7 @@ def test_inspection_namespace():
     assert info.capabilities() == {
         "boolean indexing": False,
         "data-dependent shapes": False,
-        "max dimensions": None,
+        "max dimensions": 10,
     }
     assert isinstance(info.devices(), tuple)
     assert info.default_device() in info.devices()
