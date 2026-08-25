@@ -28,6 +28,10 @@ homepage = "https://data-apis.org/array-api-compat/"
 repository = "https://github.com/data-apis/array-api-compat/"
 
 
+[project.optional-dependencies]
+mlx = ["mlx; sys_platform == 'darwin'"]
+
+
 [dependency-groups]
 cupy = ["cupy"]
 dask = ["dask>=2024.9.0"]
