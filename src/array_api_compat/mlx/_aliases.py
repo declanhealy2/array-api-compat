@@ -87,8 +87,7 @@ def asarray(
         return mx.asarray(obj, dtype=dtype, copy=copy)
 
     with mx.stream(_stream(device)):
-        result = mx.asarray(obj, dtype=dtype, copy=copy)
-    return _copy_array(result, device=device)
+        return mx.asarray(obj, dtype=dtype, copy=copy)
 
 
 def from_dlpack(
