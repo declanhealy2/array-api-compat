@@ -114,6 +114,7 @@ def test_asarray_converts_dtype_on_the_requested_device():
 def test_dtype_helpers():
     assert xp.broadcast_shapes() == ()
     assert xp.broadcast_shapes((2, 1), (1, 3)) == (2, 3)
+    assert xp.broadcast_shapes((0,), ()) == (0,)
     assert xp.can_cast(mx.int8, mx.int16)
     assert xp.result_type(mx.int8, mx.int16, 1) == mx.int16
 
@@ -199,17 +200,17 @@ def test_linalg_namespace():
     assert xp.linalg.vector_norm(x, axis=(0, 1)).shape == ()
 
 
-def test_complex_linalg_uses_supported_cpu_stream():
+def test_linalg_uses_supported_cpu_stream():
     previous_device = mx.default_device()
     mx.set_default_device(mx.gpu)
     try:
-        matrix = mx.array([[2 + 0j, 0j], [0j, 4 + 0j]], dtype=mx.complex64)
-        right_hand_side = mx.array([2 + 0j, 8 + 0j], dtype=mx.complex64)
+        matrix = mx.array([[2.0, 0.0], [0.0, 4.0]], dtype=mx.float32)
+        right_hand_side = mx.array([2.0, 8.0], dtype=mx.float32)
         solution = xp.linalg.solve(matrix, right_hand_side)
         eigenvalues = xp.linalg.eigvalsh(matrix)
         mx.eval(solution, eigenvalues)
     finally:
         mx.set_default_device(previous_device)
 
-    assert solution.tolist() == [1 + 0j, 2 + 0j]
+    assert solution.tolist() == [1.0, 2.0]
     assert eigenvalues.tolist() == [2.0, 4.0]

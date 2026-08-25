@@ -377,7 +377,7 @@ def moveaxis(
 
     order = [axis for axis in range(x.ndim) if axis not in normalized_source]
     for destination_axis, source_axis in sorted(
-        zip(normalized_destination, normalized_source),
+        zip(normalized_destination, normalized_source, strict=True),
     ):
         order.insert(destination_axis, source_axis)
     return mx.transpose(x, order)

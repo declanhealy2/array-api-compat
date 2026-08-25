@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
 from itertools import zip_longest
 from typing import Any, NamedTuple
 
@@ -103,7 +102,9 @@ def astype(
             return x
         return _copy_array(x, device=target_device)
     result = mx.astype(x, dtype)
-    return result if target_device is None else _copy_array(result, device=target_device)
+    return (
+        result if target_device is None else _copy_array(result, device=target_device)
+    )
 
 
 def broadcast_shapes(*shapes: tuple[int, ...]) -> tuple[int, ...]:
@@ -111,7 +112,7 @@ def broadcast_shapes(*shapes: tuple[int, ...]) -> tuple[int, ...]:
         return ()
     result: list[int] = []
     for dimensions in zip_longest(*(reversed(shape) for shape in shapes), fillvalue=1):
-        output = max(dimensions)
+        output = next((dimension for dimension in dimensions if dimension != 1), 1)
         if any(dimension not in (1, output) for dimension in dimensions):
             raise ValueError(f"shapes {shapes!r} are not broadcastable")
         result.append(output)
@@ -186,7 +187,9 @@ def cumulative_sum(
 ) -> Array:
     if axis is None:
         if x.ndim > 1:
-            raise ValueError("axis must be specified for arrays with more than one dimension")
+            raise ValueError(
+                "axis must be specified for arrays with more than one dimension"
+            )
         axis = 0
     output_dtype = _default_reduction_dtype(x.dtype) if dtype is None else dtype
     result = mx.cumsum(x, axis=axis, dtype=output_dtype)
@@ -209,7 +212,9 @@ def cumulative_prod(
 ) -> Array:
     if axis is None:
         if x.ndim > 1:
-            raise ValueError("axis must be specified for arrays with more than one dimension")
+            raise ValueError(
+                "axis must be specified for arrays with more than one dimension"
+            )
         axis = 0
     output_dtype = _default_reduction_dtype(x.dtype) if dtype is None else dtype
     result = mx.cumprod(x, axis=axis, dtype=output_dtype)
