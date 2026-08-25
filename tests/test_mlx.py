@@ -134,7 +134,11 @@ def test_searching_sorting_and_set_wrappers():
     assert xp.argsort(x, descending=True).tolist() == [0, 3, 1, 2]
     assert xp.sort(x, descending=True).tolist() == [3, 2, 1, 1]
     assert xp.searchsorted(mx.array([1, 3, 5]), 3).item() == 1
-    assert xp.isin(mx.array([1, 2, 3]), mx.array([2, 4])).tolist() == [False, True, False]
+    assert xp.isin(mx.array([1, 2, 3]), mx.array([2, 4])).tolist() == [
+        False,
+        True,
+        False,
+    ]
 
 
 def test_elementwise_overrides():
@@ -164,3 +168,19 @@ def test_linalg_namespace():
     assert result.eigenvectors.shape == (2, 2)
     assert xp.linalg.matrix_norm(x).shape == ()
     assert xp.linalg.vector_norm(x, axis=(0, 1)).shape == ()
+
+
+def test_complex_linalg_uses_supported_cpu_stream():
+    previous_device = mx.default_device()
+    mx.set_default_device(mx.gpu)
+    try:
+        matrix = mx.array([[2 + 0j, 0j], [0j, 4 + 0j]], dtype=mx.complex64)
+        right_hand_side = mx.array([2 + 0j, 8 + 0j], dtype=mx.complex64)
+        solution = xp.linalg.solve(matrix, right_hand_side)
+        eigenvalues = xp.linalg.eigvalsh(matrix)
+        mx.eval(solution, eigenvalues)
+    finally:
+        mx.set_default_device(previous_device)
+
+    assert solution.tolist() == [1 + 0j, 2 + 0j]
+    assert eigenvalues.tolist() == [2.0, 4.0]

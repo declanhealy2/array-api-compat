@@ -52,6 +52,10 @@ def eigh(x: Array, /) -> EighResult:
     return EighResult(*mx.linalg.eigh(x, stream=mx.cpu))
 
 
+def eigvalsh(x: Array, /, *, UPLO: Literal["L", "U"] = "L") -> Array:
+    return mx.linalg.eigvalsh(x, UPLO=UPLO, stream=mx.cpu)
+
+
 def matrix_norm(
     x: Array,
     /,
@@ -78,9 +82,7 @@ def matrix_rank(
     singular_values = svdvals(x)
     largest = mx.max(singular_values, axis=-1, keepdims=True)
     if rtol is None:
-        threshold = largest * max(x.shape[-2:]) * mx.finfo(
-            singular_values.dtype
-        ).eps
+        threshold = largest * max(x.shape[-2:]) * mx.finfo(singular_values.dtype).eps
     else:
         threshold = largest * mx.asarray(rtol)[..., None]
     return mx.count_nonzero(
@@ -132,6 +134,10 @@ def qr(
 
 def slogdet(x: Array, /) -> SlogdetResult:
     return SlogdetResult(*mx.linalg.slogdet(x, stream=mx.cpu))
+
+
+def solve(x1: Array, x2: Array, /) -> Array:
+    return mx.linalg.solve(x1, x2, stream=mx.cpu)
 
 
 def svd(
@@ -222,18 +228,14 @@ def vector_norm(
         order = remaining + axes
         permuted = mx.transpose(x, order) if order != tuple(range(x.ndim)) else x
         reduced_size = math.prod(x.shape[index] for index in axes)
-        reduced_shape = tuple(x.shape[index] for index in remaining) + (
-            reduced_size,
-        )
+        reduced_shape = tuple(x.shape[index] for index in remaining) + (reduced_size,)
         flattened = mx.reshape(permuted, reduced_shape)
         result = mx.linalg.norm(flattened, ord=ord, axis=-1)
 
     if not keepdims:
         return result
 
-    target_shape = [
-        1 if index in axes else x.shape[index] for index in range(x.ndim)
-    ]
+    target_shape = [1 if index in axes else x.shape[index] for index in range(x.ndim)]
     return mx.reshape(result, tuple(target_shape))
 
 
@@ -248,6 +250,7 @@ __all__ = sorted(
         "cross",
         "diagonal",
         "eigh",
+        "eigvalsh",
         "matrix_norm",
         "matrix_rank",
         "matrix_transpose",
@@ -255,6 +258,7 @@ __all__ = sorted(
         "pinv",
         "qr",
         "slogdet",
+        "solve",
         "svd",
         "svdvals",
         "tensordot",
