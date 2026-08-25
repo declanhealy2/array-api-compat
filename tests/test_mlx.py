@@ -196,6 +196,7 @@ def test_linalg_namespace():
     result = xp.linalg.eigh(x)
     assert result.eigenvalues.shape == (2,)
     assert result.eigenvectors.shape == (2, 2)
+    assert xp.linalg.matmul(x, mx.ones((2, 1))).tolist() == [[2.0], [1.0]]
     assert xp.linalg.matrix_norm(x).shape == ()
     assert xp.linalg.vector_norm(x, axis=(0, 1)).shape == ()
 

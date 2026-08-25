@@ -91,6 +91,10 @@ def matrix_rank(
     ).astype(mx.int32)
 
 
+def matmul(x1: Array, x2: Array, /) -> Array:
+    return mx.matmul(x1, x2)
+
+
 def outer(x1: Array, x2: Array, /) -> Array:
     return mx.outer(x1, x2)
 
@@ -254,6 +258,7 @@ __all__ = sorted(
         "matrix_norm",
         "matrix_rank",
         "matrix_transpose",
+        "matmul",
         "outer",
         "pinv",
         "qr",
