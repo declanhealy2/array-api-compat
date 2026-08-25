@@ -60,13 +60,25 @@ def asarray(
             return obj
         raise ValueError("Unable to avoid copy while changing the dtype")
 
-    result = mx.asarray(obj, dtype=dtype, copy=copy)
-    if device is None:
+    if isinstance(obj, mx.array):
+        target_device = _stream(device)
+        conversion_device = mx.cpu if obj.dtype == mx.float64 else target_device
+        result = (
+            obj
+            if dtype is None or dtype == obj.dtype
+            else mx.astype(obj, dtype, stream=conversion_device)
+        )
+        if device is not None:
+            return _copy_array(result, device=target_device)
+        if copy is True and result is obj:
+            return _copy_array(result, device=conversion_device)
         return result
 
-    # MLX uses unified memory; executing an explicit native copy on the
-    # requested device is the closest meaningful implementation of a
-    # creation-device request without inventing residency metadata.
+    if device is None:
+        return mx.asarray(obj, dtype=dtype, copy=copy)
+
+    with mx.stream(_stream(device)):
+        result = mx.asarray(obj, dtype=dtype, copy=copy)
     return _copy_array(result, device=device)
 
 
@@ -338,9 +350,7 @@ def moveaxis(
 ) -> Array:
     if isinstance(source, int):
         if not isinstance(destination, int):
-            raise ValueError(
-                "source and destination must have the same number of axes"
-            )
+            raise ValueError("source and destination must have the same number of axes")
         return mx.moveaxis(x, source, destination)
 
     if isinstance(destination, int):

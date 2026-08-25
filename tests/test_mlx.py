@@ -82,6 +82,29 @@ def test_creation_signatures_and_copy():
     assert isinstance(xp.meshgrid(mx.arange(2), mx.arange(3)), tuple)
 
 
+def test_asarray_converts_dtype_on_the_requested_device():
+    previous_device = mx.default_device()
+    mx.set_default_device(mx.gpu)
+    try:
+        with mx.stream(mx.cpu):
+            source = mx.asarray([1.25, 2.5], dtype=mx.float64)
+        inferred = xp.asarray(source, dtype=mx.float32)
+        converted = xp.asarray(source, dtype=mx.float32, device=mx.gpu)
+        created = xp.asarray([1.25, 2.5], dtype=mx.float64, device=mx.cpu)
+        mx.eval(inferred)
+        mx.eval(converted)
+        mx.eval(created)
+    finally:
+        mx.set_default_device(previous_device)
+
+    assert inferred.dtype == mx.float32
+    assert inferred.tolist() == [1.25, 2.5]
+    assert converted.dtype == mx.float32
+    assert converted.tolist() == [1.25, 2.5]
+    assert created.dtype == mx.float64
+    assert created.tolist() == [1.25, 2.5]
+
+
 def test_dtype_helpers():
     assert xp.broadcast_shapes() == ()
     assert xp.broadcast_shapes((2, 1), (1, 3)) == (2, 3)
