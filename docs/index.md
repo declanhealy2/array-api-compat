@@ -2,9 +2,9 @@
 
 This is a small wrapper around common array libraries that is compatible with
 the [Array API standard](https://data-apis.org/array-api/latest/). Currently,
-NumPy, CuPy, PyTorch, Dask, JAX, mparray, ndonnx, Sparse and dpnp are
-supported. If you want
-support for other array libraries, or if you encounter any issues, please
+NumPy, CuPy, PyTorch, Dask, JAX, mparray, MLX, ndonnx, Sparse and dpnp are
+supported. If you want support for other array libraries, or if you encounter
+any issues, please
 [open an issue](https://github.com/data-apis/array-api-compat/issues).
 
 Note that some of the functionality in this library is backwards incompatible
@@ -18,13 +18,19 @@ version](https://data-apis.org/array-api/2024.12/) of the standard.
 
 ## Installation
 
-`array-api-compat` is available on both [PyPI](https://pypi.org/project/array-api-compat/)
+`array-api-compat` is available on [PyPI](https://pypi.org/project/array-api-compat/):
 
 ```
 python -m pip install array-api-compat
 ```
 
-and [conda-forge](https://anaconda.org/conda-forge/array-api-compat)
+Install the MLX namespace and its backend together on Apple silicon with
+
+```
+python -m pip install "array-api-compat[mlx]"
+```
+
+It is also available on [conda-forge](https://anaconda.org/conda-forge/array-api-compat):
 
 ```
 conda install --channel conda-forge array-api-compat
@@ -59,6 +65,10 @@ import array_api_compat.torch as torch
 
 ```py
 import array_api_compat.dask as da
+```
+
+```py
+import array_api_compat.mlx as mx
 ```
 
 ```{note}

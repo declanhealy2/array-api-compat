@@ -1,0 +1,70 @@
+name: MLX Array API Tests
+
+on:
+  push:
+    branches:
+      - agent/mlx-compat-complete
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: mlx-array-api-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout array-api-compat
+        uses: actions/checkout@v4
+
+      - name: Checkout array-api-tests
+        uses: actions/checkout@v4
+        with:
+          repository: data-apis/array-api-tests
+          submodules: true
+          path: array-api-tests
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install mlx pytest
+          python -m pip install -r array-api-tests/requirements.txt
+          python -m pip install .
+
+      - name: Run focused MLX wrapper tests
+        run: python -m pytest tests/test_mlx.py -q
+
+      - name: Run Array API conformance suite
+        env:
+          ARRAY_API_TESTS_MODULE: array_api_compat.mlx
+          ARRAY_API_TESTS_VERSION: "2025.12"
+        run: |
+          python - <<'PY'
+          import mlx.core as mx
+          import pytest
+
+          mx.set_default_device(mx.cpu)
+          raise SystemExit(
+              pytest.main(
+                  [
+                      "array-api-tests/array_api_tests",
+                      "--max-examples=100",
+                      "--hypothesis-disable-deadline",
+                      "--xfails-file=mlx-xfails.txt",
+                      "--skips-file=mlx-skips.txt",
+                      "-q",
+                      "-rxXfE",
+                  ]
+              )
+          )
+          PY
