@@ -1,5 +1,6 @@
 import inspect
 
+import numpy as np
 import pytest
 
 mx = pytest.importorskip("mlx.core")
@@ -215,3 +216,51 @@ def test_linalg_uses_supported_cpu_stream():
 
     assert solution.tolist() == [1.0, 2.0]
     assert eigenvalues.tolist() == [2.0, 4.0]
+
+
+@pytest.mark.parametrize("device", [mx.cpu, mx.gpu])
+@pytest.mark.parametrize(
+    "values, dtype",
+    [
+        ([[3, 1, 3], [2, 1, 2]], mx.int32),
+        ([2**40, -(2**40), 2**40, 0], mx.int64),
+        ([True, False, True], mx.bool_),
+        ([0.0, -0.0, np.inf, -np.inf, np.nan, np.nan, np.inf], mx.float32),
+        ([1 + 2j, 1 - 2j, 1 + 2j, 2 + 1j, 1 - 2j], mx.complex64),
+        ([complex(1, np.nan), complex(np.nan, 1), 1 + 2j, 1 + 2j], mx.complex64),
+        (np.empty((2, 0)), mx.float32),
+        (3, mx.int32),
+    ],
+)
+def test_unique_inverse_reconstructs_without_merging_nans(device, values, dtype):
+    with mx.stream(device):
+        original = mx.array(values, dtype=dtype)
+        result = xp.unique_inverse(original)
+        mx.eval(result.values, result.inverse_indices)
+        restored = result.values[result.inverse_indices]
+        mx.eval(restored)
+    host = np.asarray(original)
+    expected = np.unique(host, equal_nan=False)
+    assert result.values.size == expected.size
+    assert result.values.dtype == original.dtype
+    assert result.inverse_indices.dtype == mx.int32
+    assert result.inverse_indices.shape == original.shape
+    np.testing.assert_array_equal(restored, host)
+    actual = np.asarray(result.values)
+    np.testing.assert_array_equal(
+        np.sort(actual[~np.isnan(actual)]), np.sort(expected[~np.isnan(expected)])
+    )
+
+
+def test_unique_inverse_float64_strided_cpu_input():
+    with mx.stream(mx.cpu):
+        source = mx.array(
+            [2**40 + 0.25, 0, 2**40 + 0.5, 0, 2**40 + 0.25, 0], dtype=mx.float64
+        )
+        original = source[::2]
+        result = xp.unique_inverse(original)
+        restored = result.values[result.inverse_indices]
+        mx.eval(restored)
+    assert result.values.size == 2
+    assert result.values.dtype == mx.float64
+    np.testing.assert_array_equal(restored, original)

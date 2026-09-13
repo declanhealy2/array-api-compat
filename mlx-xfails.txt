@@ -1,9 +1,8 @@
-# MLX arrays intentionally do not implement data-dependent output shapes.
+# Remaining MLX operations without data-dependent output shapes.
 array_api_tests/test_array_object.py::test_getitem
 array_api_tests/test_searching_functions.py::test_nonzero
 array_api_tests/test_set_functions.py::test_unique_all
 array_api_tests/test_set_functions.py::test_unique_counts
-array_api_tests/test_set_functions.py::test_unique_inverse
 array_api_tests/test_set_functions.py::test_unique_values
 
 # array-api-compat does not wrap or monkeypatch mlx.core.array.

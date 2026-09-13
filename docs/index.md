@@ -71,6 +71,14 @@ import array_api_compat.dask as da
 import array_api_compat.mlx as mx
 ```
 
+The MLX `unique_inverse` implementation keeps values and reconstruction
+indices in MLX arrays. It synchronizes one scalar to determine the output
+length, so it supports eager execution rather than shape-static compilation.
+NaNs remain distinct and signed zeros compare equal, as required by the
+[standard](https://data-apis.org/array-api/latest/API_specification/generated/array_api.unique_inverse.html).
+Other data-dependent-shape operations are not implemented; the namespace's
+general data-dependent-shape capability remains false.
+
 ```{note}
 There are no `array_api_compat` submodules for JAX, mparray, sparse, or ndonnx.
 These libraries provide their own Array API support. (JAX provides it through

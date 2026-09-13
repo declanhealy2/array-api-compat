@@ -409,7 +409,24 @@ def unique_counts(x: Array, /) -> UniqueCountsResult:
 
 
 def unique_inverse(x: Array, /) -> UniqueInverseResult:
-    raise NotImplementedError("MLX cannot represent data-dependent unique shapes")
+    """Return resident unique values and reconstruction indices, synchronizing their count."""
+    flat = mx.reshape(x, (-1,))
+    if flat.size == 0:
+        return UniqueInverseResult(flat, mx.zeros(x.shape, dtype=mx.int32))
+    if x.dtype == mx.complex64:
+        permutation = mx.argsort(mx.imag(flat))
+        permutation = permutation[mx.argsort(mx.real(flat)[permutation])]
+    else:
+        permutation = mx.argsort(flat.astype(mx.int32) if x.dtype == mx.bool_ else flat)
+    ordered = flat[permutation]
+    starts = mx.concatenate(
+        (mx.ones((1,), dtype=mx.bool_), ordered[1:] != ordered[:-1])
+    )
+    labels = mx.cumsum(starts.astype(mx.int32)) - 1
+    count = int(labels[-1].item()) + 1
+    positions = mx.sort(mx.where(starts, mx.arange(flat.size), flat.size))[:count]
+    inverse = labels[mx.argsort(permutation)].reshape(x.shape)
+    return UniqueInverseResult(ordered[positions], inverse)
 
 
 def unique_values(x: Array, /) -> Array:
